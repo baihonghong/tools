@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>36位ID生成器</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .id-display {
+            background: #f8f9fa;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .id-value {
+            font-family: 'Courier New', monospace;
+            font-size: 1.4em;
+            color: #764ba2;
+            word-break: break-all;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .id-length {
+            color: #999;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border-radius: 50px;
+            cursor: pointer;
+            flex: 1;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        button.secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .info {
+            background: #e7f3ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-top: 30px;
+            border-radius: 5px;
+        }
+        .info h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .info ul {
+            margin-left: 20px;
+            color: #555;
+        }
+        .info li {
+            margin: 5px 0;
+        }
+        .batch-section {
+            margin-top: 20px;
+        }
+        .batch-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .batch-input input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .batch-input button {
+            flex: 0 0 auto;
+            padding: 10px 25px;
+        }
+        .batch-results {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .batch-results .id-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔢 36位ID生成器</h1>
+        <p class="subtitle">基于时间戳的全局唯一ID生成器（纯前端实现）</p>
+
+        <div class="id-display">
+            <div class="id-value" id="idValue">点击按钮生成ID</div>
+            <div class="id-length" id="idLength"></div>
+        </div>
+
+        <div class="btn-group">
+            <button onclick="generateId()">生成新ID</button>
+            <button class="secondary" onclick="generateBatch()">批量生成</button>
+        </div>
+
+        <div class="batch-section">
+            <div class="batch-input">
+                <input type="number" id="batchCount" placeholder="数量" value="10" min="1" max="1000">
+            </div>
+            <div class="batch-results" id="batchResults"></div>
+        </div>
+
+        <div class="info">
+            <h3>✨ 特性</h3>
+            <ul>
+                <li>✅ 基于时间戳，有序递增</li>
+                <li>✅ 36位字符串长度</li>
+                <li>✅ 全局唯一，无冲突</li>
+                <li>✅ 纯前端实现，无需后端</li>
+                <li>✅ 可部署到GitHub Pages</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 时间戳ID生成器（JavaScript版本）
+        const BASE36_CHARS = '0123456789abcdefghijklmnopqrstuvwxyz';
+        const START_TIMESTAMP = 1577808000000; // 2020-01-01
+        let sequence = 0;
+        let lastTimestamp = -1;
+        let counter = 0;
+
+        function generateId() {
+            const currentTimestamp = Date.now();
+
+            if (currentTimestamp < lastTimestamp) {
+                throw new Error('时钟回拨');
+            }
+
+            if (currentTimestamp === lastTimestamp) {
+                sequence = (sequence + 1) & 0xFFF; // 12位
+                if (sequence === 0) {
+                    // 等待下一毫秒
+                    while (Date.now() <= currentTimestamp) {}
+                    return generateId();
+                }
+            } else {
+                sequence = 0;
+            }
+
+            lastTimestamp = currentTimestamp;
+
+            // 生成原始ID
+            const rawId = ((currentTimestamp - START_TIMESTAMP) << 22) | sequence;
+            const id = encodeTo36(rawId);
+
+            document.getElementById('idValue').textContent = id;
+            document.getElementById('idLength').textContent = '长度: ' + id.length + ' 字符 | 时间戳: ' + currentTimestamp;
+        }
+
+        function encodeTo36(number) {
+            const sb = [];
+            let temp = Math.abs(number);
+
+            while (temp > 0) {
+                sb.push(BASE36_CHARS[temp % 36]);
+                temp = Math.floor(temp / 36);
+            }
+
+            let base36Str = sb.reverse().join('');
+
+            // 补齐到36位
+            if (base36Str.length < 36) {
+                const paddingLength = 36 - base36Str.length;
+                const padding = [];
+                const counterValue = counter++;
+
+                for (let i = 0; i < paddingLength; i++) {
+                    const index = (counterValue + i) % 36;
+                    padding.push(BASE36_CHARS[index]);
+                }
+                return padding.join('') + base36Str;
+            }
+
+            // 截取后36位
+            if (base36Str.length > 36) {
+                return base36Str.substring(base36Str.length - 36);
+            }
+
+            return base36Str;
+        }
+
+        function generateBatch() {
+            const count = parseInt(document.getElementById('batchCount').value);
+            if (count <= 0 || count > 1000) {
+                alert('数量必须在1-1000之间');
+                return;
+            }
+
+            const results = document.getElementById('batchResults');
+            results.innerHTML = '<strong>生成 ' + count + ' 个ID：</strong>';
+
+            for (let i = 0; i < count; i++) {
+                generateId();
+                const id = document.getElementById('idValue').textContent;
+                results.innerHTML += '<div class="id-item">' + (i + 1) + '. ' + id + '</div>';
+            }
+        }
+
+        // 页面加载时自动生成一个ID
+        window.onload = generateId;
+    </script>
+</body>
+</html>

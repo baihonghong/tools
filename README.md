@@ -74,6 +74,22 @@ GET http://localhost:8080/generateBatch?count=10
 }
 ```
 
+#### 部署到 Railway（推荐）
+
+**免费部署到公网**：
+
+1. 访问 https://railway.app/
+2. 点击 "Start a New Project"
+3. 选择 "Deploy from GitHub repo"
+4. 授权 GitHub 并选择 `baihonghong/tools` 仓库
+5. Railway 自动识别 Spring Boot 项目并部署
+6. 部署完成后获得公网地址：
+   ```
+   https://your-app.up.railway.app
+   ```
+
+✅ 完全免费，自动部署，公网访问
+
 #### 技术栈
 
 - Java 11
@@ -93,6 +109,7 @@ tools/
 │   ├── application.properties         # 配置文件
 │   └── templates/index.html           # Web界面
 ├── pom.xml                            # Maven配置
+├── Procfile                           # Railway部署配置
 └── README.md
 ```
 
